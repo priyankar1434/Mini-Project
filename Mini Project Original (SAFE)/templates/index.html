@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vehicle Authorization Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Premium theme -->
+    <link href="{{ url_for('static', filename='premium.css') }}" rel="stylesheet">
+    
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light navbar-premium sticky-top shadow-soft">
+    <div class="container-fluid py-2">
+        <a class="navbar-brand" href="#">
+            <div class="d-flex align-items-center">
+                <div class="brand-logo me-3">
+                    <img src="{{ url_for('static', filename='college_logo.png') }}" alt="College Logo" style="width: 40px; height: 40px; object-fit: cover; border-radius: 10px;">
+                </div>
+                <div>
+                    <span class="navbar-brand h4 mb-0">CMP Degree College</span>
+                </div>
+            </div>
+        </a>
+        
+        <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+            <a class="nav-link me-3" href="#home">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+            </a>
+            <a class="nav-link me-3" href="#records">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+            </a>
+            <a class="nav-link me-3" href="#">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 9.96l4.24 4.24M20.46 14.04l-4.24 4.24M7.78 7.78L3.54 3.54"/>
+                </svg>
+            </a>
+            
+            {% if user %}
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                    <div class="user-avatar me-2">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="user-name">{{ user.full_name }}</div>
+                        <div class="user-role text-dim small">{{ user.role.title() }}</div>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><h6 class="dropdown-header">{{ user.username }}</h6></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 9.96l4.24 4.24M20.46 14.04l-4.24 4.24M7.78 7.78L3.54 3.54"/>
+                        </svg>
+                        Settings
+                    </a></li>
+                    <li><a class="dropdown-item" href="#">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                        Activity Log
+                    </a></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </a></li>
+                </ul>
+            </div>
+            {% else %}
+            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4 py-md-5">
+    <!-- Security feedback UI -->
+    <div id="alertBanner" class="alert-banner" style="display:none;"></div>
+    <div id="screenBorder" class="screen-border" style="display:none;"></div>
+    
+    <!-- Hero Section -->
+    <section class="hero-section-simple text-center mb-5">
+        <h1 class="hero-title-black">Vehicle Authorization System</h1>
+        <p class="hero-subtitle">Smart, secure, and elegant vehicle verification</p>
+    </section>
+
+    <!-- Modern Cards Section -->
+    <section class="cards-section mb-5">
+        <div class="row g-4">
+            <!-- Upload Image Card -->
+            <div class="col-lg-4 col-md-6">
+                <div class="modern-card" id="uploadCard">
+                    <div class="card-icon-wrapper purple">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">Upload Image</h3>
+                    <p class="card-subtitle">Upload vehicle images for instant verification</p>
+                    <button class="gradient-btn purple" onclick="toggleUploadArea()">
+                        <span>Upload Image</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </button>
+                    <div id="uploadArea" class="upload-content" style="display: none;">
+                        <div class="upload-box">
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="drag-drop-area" id="dragDropArea">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <polyline points="21 15 16 10 5 21"/>
+                                    </svg>
+                                    <p class="drag-text">Drag & drop your image here</p>
+                                    <p class="or-text">or</p>
+                                    <input type="file" name="image" id="fileInput" class="file-input" required>
+                                    <label for="fileInput" class="file-label">Browse Files</label>
+                                </div>
+                                <input type="text" name="license_plate" class="form-control mt-3" placeholder="Enter License Plate (if known)">
+                                <button type="submit" class="submit-btn w-100 mt-3">Upload & Scan</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Scan Card -->
+            <div class="col-lg-4 col-md-6">
+                <div class="modern-card" id="cameraCard">
+                    <div class="card-icon-wrapper green">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">Scan Using Camera</h3>
+                    <p class="card-subtitle">Capture vehicle images instantly</p>
+                    <button class="gradient-btn green" onclick="toggleCamera()">
+                        <span>Start Camera</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <polygon points="23 7 16 12 23 17 23 7"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                        </svg>
+                    </button>
+                    <div id="cameraArea" class="camera-content" style="display: none;">
+                        <div class="camera-preview">
+                            <video id="video" width="100%" height="240" autoplay class="rounded-3"></video>
+                            <div class="camera-controls">
+                                <button id="captureBtn" class="capture-btn">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    Capture
+                                </button>
+                            </div>
+                        </div>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Records Card -->
+            <div class="col-lg-4 col-md-6">
+                <div class="modern-card" id="recordsCard">
+                    <div class="card-icon-wrapper orange">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">View Records</h3>
+                    <p class="card-subtitle">Access complete vehicle verification history</p>
+                    <button class="gradient-btn orange" onclick="toggleRecords()">
+                        <span>View All Records</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                    <div id="recordsArea" class="records-content" style="display: none;">
+                        <div class="records-table-wrapper">
+                            <div class="records-stats">
+                                <div class="stat-card">
+                                    <span class="stat-number">{{ images|length }}</span>
+                                    <span class="stat-label">Total Records</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-number">{{ images|selectattr('3')|select('equalto', 1)|list|length }}</span>
+                                    <span class="stat-label">Authorized</span>
+                                </div>
+                            </div>
+                            <div class="records-list">
+                                {% if images %}
+                                    {% for image in images[:5] %}
+                                    <div class="record-item">
+                                        <div class="record-info">
+                                            <span class="record-plate">{{ image[2] or 'Unknown' }}</span>
+                                            <span class="record-time">{{ image[1] }}</span>
+                                        </div>
+                                        <span class="record-status {{ 'authorized' if image[3] else 'unauthorized' }}">
+                                            {{ 'Authorized' if image[3] else 'Unauthorized' }}
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="no-records">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <line x1="12" y1="8" x2="12" y2="12"/>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                        </svg>
+                                        <p>No records found</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if images|length > 5 %}
+                            <button class="view-all-btn" onclick="window.location.href='#records'">View All Records</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="records" class="records-section mb-4 mb-md-5 reveal">
+        <div class="records-header">
+            <div>
+                <h2 class="mb-2 card-title">Vehicle Records</h2>
+                <p class="text-dim mb-0">Complete history of all vehicle scans and verifications</p>
+            </div>
+            <div class="records-filters">
+                <button class="filter-btn active" data-filter="all">All Records</button>
+                <button class="filter-btn" data-filter="authorized">Authorized</button>
+                <button class="filter-btn" data-filter="unauthorized">Unauthorized</button>
+            </div>
+        </div>
+        
+        <div class="gallery-grid" id="gallery">
+            {% for filename, upload_time, plate, is_authorized in images %}
+            <div class="gallery-item reveal" data-status="{% if is_authorized %}authorized{% else %}unauthorized{% endif %}">
+                <img src="{{ url_for('uploaded_file', filename=filename) }}" alt="Vehicle Image">
+                <div class="gallery-content">
+                    <div class="gallery-plate">{{ plate }}</div>
+                    <div class="gallery-time">{{ upload_time }}</div>
+                    <span class="gallery-status {% if is_authorized %}authorized{% else %}unauthorized{% endif %}">
+                        {% if is_authorized %}✓ Authorized{% else %}✗ Unauthorized{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if images|length == 0 %}
+        <div class="text-center py-5">
+            <div class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mx-auto mb-3">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                <h3 class="card-title mb-2">No Records Yet</h3>
+                <p class="text-dim">Start by uploading or capturing vehicle images to see them here.</p>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<footer class="footer-premium">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="footer-brand">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ url_for('static', filename='college_logo.png') }}" alt="CMP Degree College" class="footer-logo me-3">
+                        <div>
+                            <h4 class="footer-college-name">CMP Degree College</h4>
+                            <p class="footer-subtitle">SmartGate System</p>
+                        </div>
+                    </div>
+                    <p class="footer-description">
+                        Advanced Vehicle Recognition Technology for Campus Security.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Center Section - Quick Links -->
+            <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
+                <div class="footer-links-section">
+                    <h5 class="footer-section-title">Quick Links</h5>
+                    <ul class="footer-links-list">
+                        <li><a href="#dashboard" class="footer-link">System Dashboard</a></li>
+                        <li><a href="#guide" class="footer-link">User Guide</a></li>
+                        <li><a href="#support" class="footer-link">Support</a></li>
+                        <li><a href="#about" class="footer-link">About System</a></li>
+                        <li><a href="#contact" class="footer-link">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Right Section - System Info -->
+            <div class="col-lg-4 col-md-12">
+                <div class="footer-info-section">
+                    <h5 class="footer-section-title">System Info</h5>
+                    <div class="system-info">
+                        <div class="info-item">
+                            <span class="info-label">Version:</span>
+                            <span class="info-value">2.0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Updated:</span>
+                            <span class="info-value">2024</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Copyright:</span>
+                            <span class="info-value"> CMP Degree College</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom Section -->
+        <div class="footer-bottom-border mt-4 pt-4">
+            <div class="row align-items-center">
+                <div class="col-12 text-center">
+                    <p class="footer-developer-credit">
+                        Designed & Developed by Priyankar Shukla
+                    </p>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<audio id="siren" src="{{ url_for('static', filename='police-siren.mp3') }}"></audio>
+
+<script>
+const siren = document.getElementById('siren');
+const alertBanner = document.getElementById('alertBanner');
+const screenBorder = document.getElementById('screenBorder');
+const rootContainer = document.querySelector('main');
+
+function triggerUnauthorizedFeedback(durationMs = 5000) {
+  try { siren.currentTime = 0; siren.play(); } catch (_) {}
+  if (navigator.vibrate) { navigator.vibrate([200, 100, 200]); }
+  alertBanner.textContent = '🚨 Unauthorized Vehicle Detected';
+  alertBanner.classList.remove('success');
+  alertBanner.style.display = 'block';
+  screenBorder.style.display = 'block';
+  if (rootContainer) rootContainer.classList.add('shake-soft');
+  const stop = () => {
+    try { siren.pause(); siren.currentTime = 0; } catch (_) {}
+    alertBanner.style.display = 'none';
+    screenBorder.style.display = 'none';
+    if (rootContainer) rootContainer.classList.remove('shake-soft');
+  };
+  const t = setTimeout(stop, durationMs);
+  return { stop, timer: t };
+}
+
+function clearUnauthorizedFeedback(active) {
+  if (active && active.timer) clearTimeout(active.timer);
+  try { siren.pause(); siren.currentTime = 0; } catch (_) {}
+  alertBanner.style.display = 'none';
+  screenBorder.style.display = 'none';
+  if (rootContainer) rootContainer.classList.remove('shake-soft');
+}
+
+function triggerSuccessFeedback(durationMs = 1500) {
+  alertBanner.textContent = '✅ Access Granted';
+  alertBanner.classList.add('success');
+  alertBanner.style.display = 'block';
+  const t = setTimeout(() => {
+    alertBanner.style.display = 'none';
+    alertBanner.classList.remove('success');
+  }, durationMs);
+  return { timer: t };
+}
+
+// Allow manual dismiss on click
+alertBanner.addEventListener('click', () => clearUnauthorizedFeedback());
+screenBorder.addEventListener('click', () => clearUnauthorizedFeedback());
+
+document.getElementById('uploadForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const res = await fetch('/upload', { method: 'POST', body: formData });
+    if (res.ok) {
+        const data = await res.json();
+        let feedback;
+        if (data.result && !data.result.is_authorized) {
+            feedback = triggerUnauthorizedFeedback(5000);
+            setTimeout(() => { clearUnauthorizedFeedback(feedback); location.reload(); }, 5200);
+        } else {
+            const ok = triggerSuccessFeedback(1500);
+            setTimeout(() => { location.reload(); }, 1600);
+        }
+    } else {
+        alert('Upload failed!');
+    }
+};
+
+// Camera capture logic
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const captureBtn = document.getElementById('captureBtn');
+
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+        video.srcObject = stream;
+        video.play();
+    });
+}
+
+captureBtn.onclick = async function() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(async function(blob) {
+        const formData = new FormData();
+        formData.append('image', blob, 'capture.jpg');
+        formData.append('license_plate', prompt('Enter License Plate:'));
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        if (res.ok) {
+            const data = await res.json();
+            let feedback;
+            if (data.result && !data.result.is_authorized) {
+                feedback = triggerUnauthorizedFeedback(5000);
+                setTimeout(() => { clearUnauthorizedFeedback(feedback); location.reload(); }, 5200);
+            } else {
+                const ok = triggerSuccessFeedback(1500);
+                setTimeout(() => { location.reload(); }, 1600);
+            }
+        } else {
+            alert('Camera upload failed!');
+        }
+    }, 'image/jpeg');
+};
+
+// Reveal on scroll animations
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in-view');
+      io.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+revealEls.forEach(el => io.observe(el));
+
+// Filter functionality
+const filterBtns = document.querySelectorAll('.filter-btn');
+const galleryItems = document.querySelectorAll('.gallery-item');
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Remove active class from all buttons
+    filterBtns.forEach(b => b.classList.remove('active'));
+    // Add active class to clicked button
+    btn.classList.add('active');
+    
+    const filter = btn.dataset.filter;
+    
+    galleryItems.forEach(item => {
+      if (filter === 'all' || item.dataset.status === filter) {
+        item.style.display = 'block';
+        setTimeout(() => {
+          item.style.opacity = '1';
+          item.style.transform = 'scale(1)';
+        }, 10);
+      } else {
+        item.style.opacity = '0';
+        item.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+          item.style.display = 'none';
+        }, 300);
+      }
+    });
+  });
+});
+
+// Smooth scrolling for navigation links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  });
+});
+
+// Add transition styles to gallery items
+galleryItems.forEach(item => {
+  item.style.transition = 'all 0.3s ease';
+});
+
+// Modern Card Interactive Functions
+function toggleUploadArea() {
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadCard = document.getElementById('uploadCard');
+    
+    if (uploadArea.style.display === 'none' || uploadArea.style.display === '') {
+        uploadArea.style.display = 'block';
+        uploadCard.style.minHeight = 'auto';
+        
+        // Close other areas
+        document.getElementById('cameraArea').style.display = 'none';
+        document.getElementById('recordsArea').style.display = 'none';
+        
+        // Initialize drag and drop
+        initializeDragDrop();
+    } else {
+        uploadArea.style.display = 'none';
+        uploadCard.style.minHeight = '380px';
+    }
+}
+
+function toggleCamera() {
+    const cameraArea = document.getElementById('cameraArea');
+    const cameraCard = document.getElementById('cameraCard');
+    
+    if (cameraArea.style.display === 'none' || cameraArea.style.display === '') {
+        cameraArea.style.display = 'block';
+        cameraCard.style.minHeight = 'auto';
+        
+        // Close other areas
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('recordsArea').style.display = 'none';
+        
+        // Start camera
+        startCamera();
+    } else {
+        cameraArea.style.display = 'none';
+        cameraCard.style.minHeight = '380px';
+        stopCamera();
+    }
+}
+
+function toggleRecords() {
+    const recordsArea = document.getElementById('recordsArea');
+    const recordsCard = document.getElementById('recordsCard');
+    
+    if (recordsArea.style.display === 'none' || recordsArea.style.display === '') {
+        recordsArea.style.display = 'block';
+        recordsCard.style.minHeight = 'auto';
+        
+        // Close other areas
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('cameraArea').style.display = 'none';
+    } else {
+        recordsArea.style.display = 'none';
+        recordsCard.style.minHeight = '380px';
+    }
+}
+
+// Drag and Drop functionality
+function initializeDragDrop() {
+    const dragDropArea = document.getElementById('dragDropArea');
+    const fileInput = document.getElementById('fileInput');
+    
+    if (!dragDropArea || !fileInput) return;
+    
+    dragDropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dragDropArea.classList.add('dragover');
+    });
+    
+    dragDropArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragDropArea.classList.remove('dragover');
+    });
+    
+    dragDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragDropArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateFileLabel(files[0].name);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            updateFileLabel(e.target.files[0].name);
+        }
+    });
+}
+
+function updateFileLabel(fileName) {
+    const fileLabel = document.querySelector('.file-label');
+    if (fileLabel) {
+        fileLabel.textContent = fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
+    }
+}
+
+// Camera functionality
+let stream = null;
+
+async function startCamera() {
+    const video = document.getElementById('video');
+    if (!video) return;
+    
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'environment'
+            } 
+        });
+        video.srcObject = stream;
+    } catch (err) {
+        console.error('Error accessing camera:', err);
+        showNotification('Camera access denied or not available', 'error');
+    }
+}
+
+function stopCamera() {
+    const video = document.getElementById('video');
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+        if (video) {
+            video.srcObject = null;
+        }
+    }
+}
+
+// Enhanced capture functionality
+document.getElementById('captureBtn')?.addEventListener('click', async function() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    
+    if (!video || !canvas) return;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+    
+    canvas.toBlob(async function(blob) {
+        const formData = new FormData();
+        formData.append('image', blob, 'capture.jpg');
+        
+        // Add license plate if provided
+        const plateInput = document.querySelector('input[name="license_plate"]');
+        if (plateInput && plateInput.value) {
+            formData.append('license_plate', plateInput.value);
+        }
+        
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification('Image captured and uploaded successfully!', 'success');
+                // Stop camera after successful capture
+                stopCamera();
+                document.getElementById('cameraArea').style.display = 'none';
+                document.getElementById('cameraCard').style.minHeight = '380px';
+                // Refresh page to show new image
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification('Upload failed: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error uploading captured image:', error);
+            showNotification('Upload failed. Please try again.', 'error');
+        }
+    }, 'image/jpeg', 0.9);
+});
+
+// Enhanced notification system
+function showNotification(message, type = 'info') {
+    const alertBanner = document.getElementById('alertBanner');
+    const screenBorder = document.getElementById('screenBorder');
+    
+    if (!alertBanner || !screenBorder) return;
+    
+    alertBanner.textContent = message;
+    alertBanner.className = 'alert-banner ' + type;
+    alertBanner.style.display = 'block';
+    
+    if (type === 'error') {
+        screenBorder.style.display = 'block';
+        setTimeout(() => {
+            screenBorder.style.display = 'none';
+        }, 3000);
+    }
+    
+    setTimeout(() => {
+        alertBanner.style.display = 'none';
+    }, 3000);
+}
+</script>
+</body>
+</html>
